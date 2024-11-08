@@ -1,0 +1,32 @@
+name: OpenSSF Scorecard Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+permissions: read-all
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up OpenSSF Scorecard
+        run: |
+          docker pull gcr.io/openssf/scorecard:stable
+
+      - name: Run OpenSSF Scorecard
+        run: |
+          docker run -e GITHUB_AUTH_TOKEN=${{ secrets.APP_ACCESS_TOKEN }} gcr.io/openssf/scorecard:stable --show-details --repo=https://github.com/${{ github.repository }}
+        
+      - name: Upload Scorecard Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: scorecard-results
+          path: scorecard-results.json
