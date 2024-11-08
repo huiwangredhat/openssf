@@ -23,10 +23,10 @@ jobs:
 
       - name: Run OpenSSF Scorecard
         run: |
-          docker run -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} gcr.io/openssf/scorecard:stable --show-details --repo=https://github.com/${{ github.repository }} > scorecard-results.json
+          docker run -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} gcr.io/openssf/scorecard:stable --show-details --repo=https://github.com/${{ github.repository }} > results.sarif
+          cat results.sarif
         
-      - name: Upload Scorecard Results
+      - name: Upload results to code-scanning
         uses: actions/upload-artifact@v3
         with:
-          name: scorecard-results
-          path: scorecard-results.json
+          sarif_file: results.sarif
