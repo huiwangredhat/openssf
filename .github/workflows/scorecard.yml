@@ -23,7 +23,7 @@ jobs:
 
       - name: Run OpenSSF Scorecard
         run: |
-          docker run -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} gcr.io/openssf/scorecard:stable --show-details --repo=https://github.com/${{ github.repository }}
+          docker run -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} gcr.io/openssf/scorecard:stable --show-details --repo=https://github.com/${{ github.repository }} > scorecard-results.json
         
       - name: Upload Scorecard Results
         uses: actions/upload-artifact@v3
