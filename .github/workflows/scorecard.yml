@@ -5,32 +5,34 @@ on:
     branches:
       - main
   pull_request:
-    branches:
-      - main
 permissions: read-all
 
 jobs:
-  scorecard:
+  analysis:
+    name: Scorecard analysis
     runs-on: ubuntu-latest
-    
+    permissions:
+      # Needed to upload the results to code-scanning dashboard.
+      security-events: write
+      # Needed to publish results and get a badge (see publish_results below).
+      id-token: write
+      
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: "Checkout code"
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
 
-      - name: Set up OpenSSF Scorecard
-        run: |
-          docker pull gcr.io/openssf/scorecard:stable
+      - name: "Run analysis"
+        uses: ossf/scorecard-action@0864cf19026789058feabb7e87baa5f140aac736 # v2.3.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
 
-      - name: Run OpenSSF Scorecard
-        run: |
-          docker run -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} gcr.io/openssf/scorecard:stable --show-details --repo=https://github.com/${{ github.repository }} --output /tmp/results.json
-          ls -alh
-    
-      - name: Upload results to code-scanning
+      # Upload the results to GitHub's code scanning dashboard (optional).
+      # Commenting out will disable upload of results to your repo's Code Scanning dashboard
+      - name: "Upload to code-scanning"
         uses: github/codeql-action/upload-sarif@v3
         with:
-          path: /tmp/results.json
-
-      - name: Clean the results
-        run: |
-          rm /tmp/results.json
+          sarif_file: results.sarif
