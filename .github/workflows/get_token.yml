@@ -32,10 +32,6 @@ jobs:
       - name: Generate JWT Token
         id: generate-jwt
         run: |
-          - name: Generate JWT Token
-        if: ${{ steps.ctf.outputs.CTF_OUTPUT_SIZE != '0' }}
-        id: generate-jwt
-        run: |
           # Generate JWT using Ruby
           JWT=$(ruby -r jwt -e '
             payload = {
