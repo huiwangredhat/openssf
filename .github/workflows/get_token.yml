@@ -4,11 +4,7 @@ permissions:
   pull-requests: read
 on:
   pull_request:
-    types:
-      - closed
-    branches:
-      - main
-
+    types: [opened, synchronize, reopened]
 jobs:
   
   check-token:
@@ -70,22 +66,22 @@ jobs:
           response=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files?per_page=50)
           echo "$response" | jq -r '.[].filename' > filenames.txt
           echo "CHANGE_FOUND=false" >> $GITHUB_ENV
-          for change in "${changes[@]}"; do
-            if grep -q "$change" filenames.txt ; then
-              echo "CHANGE_FOUND=true" >> $GITHUB_ENV
-              break
-            fi
-          done
+          #if grep -E "controls/|.profile|rule.yml|.var" filenames.txt ; then
+          if grep -E ".yml|.var" filenames.txt ; then
+            echo "CHANGE_FOUND=true" >> $GITHUB_ENV
+          fi
           cat filenames.txt
         env:
           GH_TOKEN: ${{ env.INSTALLATION_TOKEN }}
-      - name: Test rh-product
+      - name: Set RH_PRODUCTS
+        if: ${{ env.CHANGE_FOUND == 'true' }}
         run: |
           echo "RH_PRODUCTS=(rhel8 rhel9 rhel10 ocp4)" >> $GITHUB_ENV
       - name: Print RH_PRODUCTS
+        if: ${{ env.CHANGE_FOUND == 'true' }}
         run: |
-          RH_PRODUCTS=${{ env.INSTALLATION_TOKEN }}
-          echo 
+          RH_PRODUCTS=${{ env.RH_PRODUCTS }}
+          echo ${RH_PRODUCTS[@]}
           for product in "${RH_PRODUCTS[@]}"; do
             echo $product
-          end
+          done
