@@ -1,0 +1,75 @@
+name: Sync CaC content to OSCAL
+permissions:
+  contents: write
+  pull-requests: read
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - master
+
+jobs:
+  
+  check-token:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Set up Python 3
+      - name: Set up Python 3
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      # Step 2: Install Git
+      - name: Install Git and Ruby
+        run: sudo apt-get update && sudo apt-get install -y git ruby
+      # Step 4: Get the access token for content write permission to OSCAL content
+      # 1. Generate the JWT token
+      # 2. Generate the installation ID(It's pre-generated)
+      # 3. Generate the installation access token
+      - name: Generate JWT Token
+        id: generate-jwt
+        run: |
+          # Generate JWT using Ruby
+          JWT=$(ruby -r jwt -e '
+            payload = {
+              iat: Time.now.to_i,
+              exp: Time.now.to_i + (10 * 60), # Expires in 10 mins
+              iss: ENV["APP_ID"]
+            }
+            private_key = OpenSSL::PKey::RSA.new(ENV["PRIVATE_KEY"])
+            token = JWT.encode(payload, private_key, "RS256")
+            puts token
+          ')
+          echo "JWT_TOKEN=$JWT" >> $GITHUB_ENV
+          echo "::add-mask::$JWT" # Mask the token in logs
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      # Generate the GitHub app installation access token which expires in 1 hour
+      - name: Get Installation Access Token
+        id: get-installation-token
+        run: |
+          INSTALLATION_TOKEN=$(curl -s -X POST \
+            -H "Authorization: Bearer ${{ env.JWT_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/app/installations/${{ secrets.INSTALLATION_ID }}/access_tokens \
+            | jq -r '.token')
+          echo "INSTALLATION_TOKEN=$INSTALLATION_TOKEN" >> $GITHUB_ENV
+          echo "::add-mask::$INSTALLATION_TOKEN" # Mask the token in logs
+      # Step 5: Detect the updates of CAC content
+      - name: Detect the changed files of the PR
+        id: changed-files
+        run: |
+          response=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files?per_page=50)
+          echo "$response" | jq -r '.[].filename' > filenames.txt
+          echo "CHANGE_FOUND=false" >> $GITHUB_ENV
+          for change in "${changes[@]}"; do
+            if grep -q "$change" filenames.txt ; then
+              echo "CHANGE_FOUND=true" >> $GITHUB_ENV
+              break
+            fi
+          done
+          cat filenames.txt
+        env:
+          GH_TOKEN: ${{ env.INSTALLATION_TOKEN }}
+
