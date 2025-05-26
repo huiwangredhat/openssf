@@ -36,11 +36,16 @@ jobs:
           import os
           import time
           import jwt
+          from cryptography.hazmat.primitives import serialization
 
           # Load environment variables
           app_id = os.getenv("APP_ID")
-          private_key = os.getenv("PRIVATE_KEY")
-
+          private_key_str = os.getenv("PRIVATE_KEY")
+          # Decode private key
+          private_key = serialization.load_pem_private_key(
+            private_key_str.encode(),  # Convert the string to bytes
+            password=None
+          )
           # Create the payload
           payload = {
             "iat": int(time.time()),  # Issued at time
@@ -52,6 +57,7 @@ jobs:
           token = jwt.encode(payload, private_key, algorithm="RS256")
           print(f"JWT_TOKEN={token}")
           ' >> $GITHUB_ENV
+          echo "::add-mask::$private_key"
           echo "::add-mask::$token" # Mask the token in logs
           env:
             APP_ID: ${{ secrets.APP_ID }}
