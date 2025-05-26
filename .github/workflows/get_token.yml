@@ -42,10 +42,12 @@ jobs:
           app_id = os.getenv("APP_ID")
           private_key_str = os.getenv("PRIVATE_KEY")
           # Decode private key
-          private_key = serialization.load_pem_private_key(
-            private_key_str.encode(),  # Convert the string to bytes
-            password=None
-          )
+          if private_key_str:
+            private_key = serialization.load_pem_private_key(
+             private_key_str.encode()
+            )
+          else:
+            print("private_key_str is empty")
           # Create the payload
           payload = {
             "iat": int(time.time()),  # Issued at time
