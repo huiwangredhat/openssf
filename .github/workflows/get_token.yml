@@ -20,8 +20,8 @@ jobs:
         with:
           python-version: '3.9'
       # Step 2: Install Git
-      - name: Install Git and Ruby
-        run: sudo apt-get update && sudo apt-get install -y git ruby
+      - name: Install Git
+        run: sudo apt-get update && sudo apt-get install -y git
       # Step 4: Get the access token for content write permission to OSCAL content
       # 1. Generate the JWT token
       # 2. Generate the installation ID(It's pre-generated)
@@ -29,19 +29,26 @@ jobs:
       - name: Generate JWT Token
         id: generate-jwt
         run: |
-          # Generate JWT using Ruby
-          JWT=$(ruby -r jwt -e '
-            payload = {
-              iat: Time.now.to_i,
-              exp: Time.now.to_i + (10 * 60), # Expires in 10 mins
-              iss: ENV["APP_ID"]
-            }
-            private_key = OpenSSL::PKey::RSA.new(ENV["PRIVATE_KEY"])
-            token = JWT.encode(payload, private_key, "RS256")
-            puts token
-          ')
-          echo "JWT_TOKEN=$JWT" >> $GITHUB_ENV
-          echo "::add-mask::$JWT" # Mask the token in logs
+          python -c '
+        import os
+        import time
+        import jwt
+
+        # Load environment variables
+        app_id = os.getenv("APP_ID")
+        private_key = os.getenv("PRIVATE_KEY")
+
+        # Create the payload
+        payload = {
+          "iat": int(time.time()),  # Issued at time
+          "exp": int(time.time()) + (10 * 60),  # Expires in 10 minutes
+          "iss": app_id  # Issuer
+        }
+
+        # Encode the JWT with RS256 algorithm
+        print(f"JWT_TOKEN={token}")
+        ' >> $GITHUB_ENV
+        echo "::add-mask::$token" # Mask the token in logs
         env:
           APP_ID: ${{ secrets.APP_ID }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
