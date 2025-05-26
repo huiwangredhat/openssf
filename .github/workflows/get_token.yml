@@ -57,7 +57,6 @@ jobs:
           token = jwt.encode(payload, private_key, algorithm="RS256")
           print(f"JWT_TOKEN={token}")
           ' >> $GITHUB_ENV
-          echo "::add-mask::$private_key"
           echo "::add-mask::$token" # Mask the token in logs
           env:
             APP_ID: ${{ secrets.APP_ID }}
