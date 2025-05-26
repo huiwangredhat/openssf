@@ -48,6 +48,7 @@ jobs:
             )
           else:
             print("private_key_str is empty")
+            private_key = os.getenv("PRIVATE_KEY")
           # Create the payload
           payload = {
             "iat": int(time.time()),  # Issued at time
