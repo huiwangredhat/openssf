@@ -16,7 +16,7 @@ jobs:
       run_job_check_update: ${{ steps.check_pr.outputs.run_job_check_update }}
     steps:
     - name: Check if the PR comes from the sync of OSCAL content
-      id: check-pr
+      id: check-pr-message
       run: |
         PR_TITLE="${{ github.event.pull_request.title }}"
         echo "PR Title: $PR_TITLE"
