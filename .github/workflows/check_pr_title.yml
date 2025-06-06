@@ -31,10 +31,16 @@ jobs:
   check-cac-content-update-and-sync-oscal-content:
     runs-on: ubuntu-latest
     needs: check-pr-message
-    if: ${{ needs.check-pr-message.outputs.run_job_check_update == 'true' }}
+    #if: ${{ needs.check-pr-message.outputs.run_job_check_update == 'true' }}
+    if: true
     steps:
       # Step 1: Set up Python 3
       - name: Set up Python 3
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.9'
+      - name: debug
+        run: |
+          echo ${{ needs.check-pr-message.outputs.run_job_check_update }}
+
+
