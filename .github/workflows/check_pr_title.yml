@@ -41,4 +41,5 @@ jobs:
       - name: debug
         run: |
           echo ${{ needs.check-pr-message.outputs.run_job_check_update }}
+          echo "test"
 
