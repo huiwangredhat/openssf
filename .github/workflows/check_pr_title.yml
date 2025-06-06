@@ -13,10 +13,10 @@ jobs:
   check-pr-message:
     runs-on: ubuntu-latest
     outputs:
-      run_job_check_update: ${{ steps.check_pr.outputs.run_job_check_update }}
+      run_job_check_update: ${{ steps.check-pr.outputs.run_job_check_update }}
     steps:
     - name: Check if the PR comes from the sync of OSCAL content
-      id: check-pr-message
+      id: check-pr
       run: |
         PR_TITLE="${{ github.event.pull_request.title }}"
         echo "PR Title: $PR_TITLE"
@@ -30,9 +30,8 @@ jobs:
   
   check-cac-content-update-and-sync-oscal-content:
     runs-on: ubuntu-latest
-    needs: check-pr-message
-    #if: ${{ needs.check-pr-message.outputs.run_job_check_update == 'true' }}
-    if: true
+    needs: check-pr
+    if: ${{ needs.check-pr.outputs.run_job_check_update == 'true' }}
     steps:
       # Step 1: Set up Python 3
       - name: Set up Python 3
@@ -41,6 +40,6 @@ jobs:
           python-version: '3.9'
       - name: debug
         run: |
-          echo ${{ needs.check-pr-message.outputs.run_job_check_update }}
+          echo ${{ needs.check-pr.outputs.run_job_check_update }}
 
 
