@@ -4,10 +4,7 @@ permissions:
   pull-requests: read
 on:
   pull_request:
-    types:
-      - closed
-    branches:
-      - main
+    types: [opened, synchronize, reopened]
 
 jobs:
   check-pr-message:
@@ -42,16 +39,17 @@ jobs:
         run: |
           echo ${{ needs.check-pr-message.outputs.run_job_check_update }}
           echo "test"
-    - name: Get github app token
-      uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
-      id: app-token
-      with:
-        app-id: ${{ secrets.APP_ID }}
-        private-key: ${{ secrets.PRIVATE_KEY }}
-        owner: ${{ github.repository_owner }}
-        repositories: |
-          openssf
-    - name: Checkout repo
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.ref }}
+      - name: Get github app token
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            openssf
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0 
