@@ -1,4 +1,4 @@
-name: Sync CaC content to OSCAL
+name: get_token_step_by_step
 permissions:
   contents: write
   pull-requests: read
