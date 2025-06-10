@@ -3,11 +3,12 @@ permissions:
   contents: write
   pull-requests: read
 on:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
       - main
+    pull_request:
+      types: 
+        - closed
 
 jobs:
   check-pr-message:
