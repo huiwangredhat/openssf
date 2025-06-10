@@ -45,8 +45,8 @@ jobs:
       - name: Checkout CaC repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }} # TODO: need to remove it if trigger the workflow with event merge to master
-          repository: ${{ github.repository }}
+          path:
+            cac-content
       # Step 4: Get the access token for content write permission to OSCAL content
       # 1. Generate the JWT token
       # 2. Generate the installation ID(It's pre-generated)
@@ -89,6 +89,8 @@ jobs:
       - name: Detect the changed files of the PR
         id: changed-files
         run: |
+          ls
+          pwd
           changes=("controls/" ".profile" "rule.ym" ".var")
           response=$(gh api repos/${{ github.repository }}/pulls/${{ env.PR_NO }}/files)
           echo "$response" | jq -r '.[].filename' > filenames.txt
