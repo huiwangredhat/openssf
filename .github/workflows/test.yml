@@ -39,6 +39,10 @@ jobs:
         run: |
           echo ${{ needs.check-pr-message.outputs.run_job_check_update }}
           echo "test"
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Get github app token
         uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
         id: app-token
@@ -48,7 +52,6 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: |
             openssf
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
+      - name: run test
+        run: |
+          echo "testing...."
