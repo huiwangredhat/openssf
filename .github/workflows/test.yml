@@ -4,7 +4,11 @@ permissions:
   pull-requests: read
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: 
+      - closed
+    branches:
+      - main
+
 
 jobs:
   check-pr-message:
