@@ -3,112 +3,44 @@ permissions:
   contents: write
   pull-requests: read
 on:
-  pull_request_target:
-    types: [closed]
+  push:
     branches:
       - main
 
 jobs:
-  check-pr-message:
-    runs-on: ubuntu-latest
-    outputs:
-      run_job_check_update: ${{ steps.check_pr.outputs.run_job_check_update }}
-    steps:
-    - name: 
-    - name: Check if the PR comes from the sync of OSCAL content
-      id: check_pr
-      run: |
-        PR_TITLE="${{ github.event.pull_request.title }}"
-        echo "PR Title: $PR_TITLE"
-        if [[ "$PR_TITLE" == *"Auto-generated PR from OSCAL content"* ]]; then
-          echo "The PR comes from OSCAL content. The task of Sync CaC content to OSCAL will exit."
-          echo "Skipping further checks."
-          exit 0
-        else
-          echo "::set-output name=run_job_check_update::true"
-        fi
-  
-  check-cac-content-update-and-sync-oscal-content:
-    runs-on: ubuntu-latest
-    needs: check-pr-message
-    if: ${{ needs.check-pr-message.outputs.run_job_check_update == 'true' }}
-    steps:
-      # Step 1: Set up Python 3
-      - name: Set up Python 3
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.9'
-      # Step 2: Install Git and Ruby
-      - name: Install Git and Ruby
-        run: sudo apt-get update && sudo apt-get install -y git ruby
-      # Step 3: Checkout the CaC repo
-      - name: Checkout CaC repo
-        uses: actions/checkout@v4
-        with:
-          path:
-            cac-content
-      # Step 4: Get the access token for content write permission to OSCAL content
-      # 1. Generate the JWT token
-      # 2. Generate the installation ID(It's pre-generated)
-      # 3. Generate the installation access token
-      - name: Generate JWT Token
-        id: generate-jwt
+  steps:
+      - name: Get the commit message and PR number
         run: |
-          # Generate JWT using Ruby
-          JWT=$(ruby -r jwt -e '
-            payload = {
-              iat: Time.now.to_i,
-              exp: Time.now.to_i + (10 * 60), # Expires in 10 mins
-              iss: ENV["APP_ID"]
-            }
-            private_key = OpenSSL::PKey::RSA.new(ENV["PRIVATE_KEY"])
-            token = JWT.encode(payload, private_key, "RS256")
-            puts token
-          ')
-          echo "JWT_TOKEN=$JWT" >> $GITHUB_ENV
-          echo "::add-mask::$JWT" # Mask the token in logs
-        env:
-          APP_ID: ${{ secrets.APP_ID }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-      # Generate the GitHub app installation access token which expires in 1 hour
-      - name: Get Installation Access Token
-        id: get-installation-token
+          # Get the latest commit message
+          - name: Get the commit message and PR number
         run: |
-          INSTALLATION_TOKEN=$(curl -s -X POST \
-            -H "Authorization: Bearer ${{ env.JWT_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/app/installations/${{ secrets.INSTALLATION_ID }}/access_tokens \
-            | jq -r '.token')
-          echo "INSTALLATION_TOKEN=$INSTALLATION_TOKEN" >> $GITHUB_ENV
-          echo "::add-mask::$INSTALLATION_TOKEN" # Mask the token in logs
-       # Step 5: Save PR number
-      - name: Set the PR number as env
-        run: |
-          if [[ $GITHUB_EVENT_NAME == "pull_request" && \
-                $GITHUB_EVENT_PATH != "" && \
-                $(jq --raw-output .pull_request.merged $GITHUB_EVENT_PATH) == "true" ]]; then
-            echo "The PR has been merged to the main branch"
-          else
-            echo "The PR was not merged"
-            exit 1
-          fi
-          #echo "PR_NO=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-      # Step 6: Detect the updates of CAC content
-      - name: Detect the changed files of the PR
-        id: changed-files
-        run: |
-          ls
-          pwd
-          changes=("controls/" ".profile" "rule.ym" ".var")
-          response=$(gh api repos/${{ github.repository }}/pulls/${{ env.PR_NO }}/files)
-          echo "$response" | jq -r '.[].filename' > filenames.txt
-          echo "CHANGE_FOUND=false" >> $GITHUB_ENV
-          for change in "${changes[@]}"; do
-            if grep -q "$change" filenames.txt ; then
-              echo "CHANGE_FOUND=true" >> $GITHUB_ENV
-              break
+          # Get the latest commit message (e.g., "Merge pull request #123 from branch-name")
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Latest commit message: $COMMIT_MSG"
+
+          # Extract the PR number from the commit message (if it's a merge commit)
+          PR_NUMBER=$(echo "$COMMIT_MSG" | grep -oP '#\K\d+')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Found PR number: $PR_NUMBER"
+            
+            # Optionally, get more details about the PR using GitHub API
+            PR_INFO=$(curl -s "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}")
+            
+            # Extract PR title from the response
+            PR_TITLE=$(echo "$PR_INFO" | jq -r .title)
+            echo "PR Title: $PR_TITLE"
+            if [[ "$PR_TITLE" == *"Auto-generated PR from OSCAL content"* ]]; then
+              echo "The PR comes from OSCAL content. The task of Sync CaC content to OSCAL will exit."
+              echo "Skipping further checks."
+            else
+              echo "SKIP=false" >> $GITHUB_ENV
             fi
-          done
-          cat filenames.txt
-        env:
-          GH_TOKEN: ${{ env.INSTALLATION_TOKEN }}
+      - name: Get GitHub app token
+        if: ${{ env.SKIP == 'false' }}
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
