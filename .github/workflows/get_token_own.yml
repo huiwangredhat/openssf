@@ -58,3 +58,7 @@ jobs:
       with:
         app-id: ${{ secrets.APP_ID }}
         private-key: ${{ secrets.PRIVATE_KEY }}
+    - name: Get GitHub app token
+      if: ${{ env.SKIP == 'false' }}
+      run: |
+        echo ${{ env.PR_NUMBER }}
