@@ -11,7 +11,7 @@ jobs:
   get_token_step_by_step:
     runs-on: ubuntu-latest
     steps:
-      - name: Get the commit message and PR number
+    - name: Get the commit message and PR number
       run: |
         # Get the latest commit message (e.g., "Merge pull request #123 from branch-name")
         COMMIT_MSG=$(git log -1 --pretty=%B)
@@ -37,10 +37,10 @@ jobs:
             echo "SKIP=true" >> $GITHUB_ENV
           fi
         fi
-      - name: Get GitHub app token
-        if: ${{ env.SKIP == 'false' }}
-        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
-        id: app-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+    - name: Get GitHub app token
+      if: ${{ env.SKIP == 'false' }}
+      uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      id: app-token
+      with:
+        app-id: ${{ secrets.APP_ID }}
+        private-key: ${{ secrets.PRIVATE_KEY }}
