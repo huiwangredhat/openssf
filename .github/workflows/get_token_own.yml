@@ -63,24 +63,24 @@ jobs:
       run: |
         echo ${{ env.PR_NUMBER }}
     # Step 5: Detect the updates of CAC content
-      - name: Detect files changed by PR
-        if: ${{ env.SKIP == 'false' }}
-        id: changed-files
-        run: |
-          repo=${{ github.repository }}
-          # Fetch all pages of the files for the pull request
-          url="repos/$repo/pulls/${{ env.PR_NUMBER }}/files"
-          response=$(gh api "$url" --paginate)
-          echo "$response" | jq -r '.[].filename' > filenames.txt
-          echo "CHANGE_FOUND=false" >> $GITHUB_ENV
-          if grep -E "controls/|.profile|rule.yml|.var" filenames.txt ; then
-            echo "CHANGE_FOUND=true" >> $GITHUB_ENV
-          fi
-          cat filenames.txt
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-      # Step 6: Setup the trestle bot environment
-      - name: Checkout OSCAL content repo
-        if: ${{ env.CHANGE_FOUND == 'false' }} && ${{ env.SKIP == 'false' }}
-        run: |
-          echo "sucessful....."
+    - name: Detect files changed by PR
+      if: ${{ env.SKIP == 'false' }}
+      id: changed-files
+      run: |
+        repo=${{ github.repository }}
+        # Fetch all pages of the files for the pull request
+        url="repos/$repo/pulls/${{ env.PR_NUMBER }}/files"
+        response=$(gh api "$url" --paginate)
+        echo "$response" | jq -r '.[].filename' > filenames.txt
+        echo "CHANGE_FOUND=false" >> $GITHUB_ENV
+        if grep -E "controls/|.profile|rule.yml|.var" filenames.txt ; then
+          echo "CHANGE_FOUND=true" >> $GITHUB_ENV
+        fi
+        cat filenames.txt
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+    # Step 6: Setup the trestle bot environment
+    - name: Checkout OSCAL content repo
+      if: ${{ env.CHANGE_FOUND == 'false' }} && ${{ env.SKIP == 'false' }}
+      run: |
+        echo "sucessful....."
