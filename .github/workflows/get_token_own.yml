@@ -26,6 +26,7 @@ jobs:
         path: cac-content
     - name: Get the commit message and PR number
       run: |
+        cd cac-content
         # Get the latest commit message (e.g., "Merge pull request #123 from branch-name")
         COMMIT_MSG=$(git log -1 --pretty=%B)
         echo "Latest commit message: $COMMIT_MSG"
