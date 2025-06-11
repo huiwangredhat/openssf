@@ -81,6 +81,6 @@ jobs:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}
     # Step 6: Setup the trestle bot environment
     - name: Checkout OSCAL content repo
-      if: ${{ env.CHANGE_FOUND == 'false' }} && ${{ env.SKIP == 'false' }}
+      if: ${{ env.CHANGE_FOUND == 'ture' }}
       run: |
         echo "sucessful....."
