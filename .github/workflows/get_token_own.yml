@@ -3,12 +3,10 @@ permissions:
   contents: write
   pull-requests: read
 on:
-  push:
+  pull_request_target:
+    types: [closed]
     branches:
       - main
-    pull_request:
-      types: 
-        - closed
 
 jobs:
   check-pr-message:
@@ -16,6 +14,7 @@ jobs:
     outputs:
       run_job_check_update: ${{ steps.check_pr.outputs.run_job_check_update }}
     steps:
+    - name: 
     - name: Check if the PR comes from the sync of OSCAL content
       id: check_pr
       run: |
@@ -85,7 +84,15 @@ jobs:
        # Step 5: Save PR number
       - name: Set the PR number as env
         run: |
-          echo "PR_NO=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          if [[ $GITHUB_EVENT_NAME == "pull_request" && \
+                $GITHUB_EVENT_PATH != "" && \
+                $(jq --raw-output .pull_request.merged $GITHUB_EVENT_PATH) == "true" ]]; then
+            echo "The PR has been merged to the main branch"
+          else
+            echo "The PR was not merged"
+            exit 1
+          fi
+          #echo "PR_NO=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
       # Step 6: Detect the updates of CAC content
       - name: Detect the changed files of the PR
         id: changed-files
