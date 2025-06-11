@@ -8,33 +8,35 @@ on:
       - main
 
 jobs:
-  steps:
+  get_token_step_by_step:
+    runs-on: ubuntu-latest
+    steps:
     - name: Get the commit message and PR number
-    run: |
-      # Get the latest commit message (e.g., "Merge pull request #123 from branch-name")
-      COMMIT_MSG=$(git log -1 --pretty=%B)
-      echo "Latest commit message: $COMMIT_MSG"
+      run: |
+        # Get the latest commit message (e.g., "Merge pull request #123 from branch-name")
+        COMMIT_MSG=$(git log -1 --pretty=%B)
+        echo "Latest commit message: $COMMIT_MSG"
 
-      # Extract the PR number from the commit message (if it's a merge commit)
-      PR_NUMBER=$(echo "$COMMIT_MSG" | grep -oP '#\K\d+')
-      echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+        # Extract the PR number from the commit message (if it's a merge commit)
+        PR_NUMBER=$(echo "$COMMIT_MSG" | grep -oP '#\K\d+')
+        echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-      if [ -n "$PR_NUMBER" ]; then
-        echo "Found PR number: $PR_NUMBER"
-        echo "SKIP=false" >> $GITHUB_ENV
-        
-        # Optionally, get more details about the PR using GitHub API
-        PR_INFO=$(curl -s "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}")
-        
-        # Extract PR title from the response
-        PR_TITLE=$(echo "$PR_INFO" | jq -r .title)
-        echo "PR Title: $PR_TITLE"
-        if [[ "$PR_TITLE" == *"Auto-generated PR from OSCAL content"* ]]; then
-          echo "The PR comes from OSCAL content. The task of Sync CaC content to OSCAL will exit."
-          echo "Skipping further checks."
-          echo "SKIP=true" >> $GITHUB_ENV
+        if [ -n "$PR_NUMBER" ]; then
+          echo "Found PR number: $PR_NUMBER"
+          echo "SKIP=false" >> $GITHUB_ENV
+          
+          # Optionally, get more details about the PR using GitHub API
+          PR_INFO=$(curl -s "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}")
+          
+          # Extract PR title from the response
+          PR_TITLE=$(echo "$PR_INFO" | jq -r .title)
+          echo "PR Title: $PR_TITLE"
+          if [[ "$PR_TITLE" == *"Auto-generated PR from OSCAL content"* ]]; then
+            echo "The PR comes from OSCAL content. The task of Sync CaC content to OSCAL will exit."
+            echo "Skipping further checks."
+            echo "SKIP=true" >> $GITHUB_ENV
+          fi
         fi
-      fi
     - name: Get GitHub app token
       if: ${{ env.SKIP == 'false' }}
       uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
