@@ -11,6 +11,14 @@ jobs:
   get_token_step_by_step:
     runs-on: ubuntu-latest
     steps:
+    # Step 1: Set up Python 3
+    - name: Set up Python 3
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    # Step 2: Install Git
+    - name: Install Git
+      run: sudo apt-get update && sudo apt-get install -y git
     - name: Get the commit message and PR number
       run: |
         # Get the latest commit message (e.g., "Merge pull request #123 from branch-name")
