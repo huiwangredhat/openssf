@@ -96,32 +96,38 @@ jobs:
         echo "CHANGE_FOUND=false" >> $GITHUB_ENV
         while IFS= read -r line; do
           if echo "$file" | grep -qE "controls/|\.profile"; then
-            echo "$file" >> update_filename.txt
+            echo "$file" >> updated_filenames.txt
             echo "CHANGE_FOUND=true" >> $GITHUB_ENV
             echo "The change_found for finding controls and profiles: ${{ env.CHANGE_FOUND}}"
           elif [[ "$file" == *"rule.yml" ]]; then
             # Fetch the diff for the rule.yml file (or you can use a similar method you used to get diffs previously)
             diff=$(gh api "repos/$repo/pulls/${{ env.PR_NUMBER }}/files" --paginate | jq -r --arg file "$file" '.[] | select(.filename == $file) | .patch')
-
+            echo "$diff"
             # Check if the diff contains the keyword "description"
             if [[ "$diff" == *"description"* || "$diff" == *"rationale"* ]]; then
-              echo "$file" >> update_filename.txt
+              echo "$file" >> updated_filenames.txt
               echo "CHANGE_FOUND=true" >> $GITHUB_ENV
             fi
           # Check if the file name ends with ".var" and contains "description" or "options" changes
           elif [[ "$file" == *.var ]]; then
             # Fetch the diff for the .var file
             diff=$(gh api "repos/$repo/pulls/${{ env.PR_NUMBER }}/files" --paginate | jq -r --arg file "$file" '.[] | select(.filename == $file) | .patch')
-
+            echo "$diff"
             # Check if the diff contains the keywords "description" or "options"
             if [[ "$diff" == *"description"* || "$diff" == *"options"* ]]; then
-              echo "$file" >> update_filename.txt
+              echo "$file" >> updated_filenames.txt
               echo "CHANGE_FOUND=true" >> $GITHUB_ENV
             fi
           fi
         done < filenames.txt
         echo "${{ env.CHANGE_FOUND }}"
         cat filenames.txt
-        cat update_filename.txt
+        if [[ -f updated_filenames.txt ]]; then
+          # If the file exists, print its contents
+          cat updated_filenames.txt
+        else
+          # If the file doesn't exist, print a message or handle accordingly
+          echo "updated_filenames.txt does not exist."
+        fi
       env:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}
