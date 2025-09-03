@@ -84,3 +84,35 @@ jobs:
       if: ${{ env.CHANGE_FOUND == 'ture' }}
       run: |
         echo "sucessful....."
+    # Step 7: Check the details of the updated rule and var files
+    - name: Check the deetails of the rule and var files changed by PR
+      if: ${{ env.SKIP == 'false' }}
+      id: changed-files
+      run: |
+        repo=${{ github.repository }}
+        # Fetch all pages of the files for the pull request
+        url="repos/$repo/pulls/${{ env.PR_NUMBER }}/files"
+        response=$(gh api "$url" --paginate)
+        echo "$response" | jq -r '.[].filename' > filenames.txt
+        echo "CHANGE_FOUND=false" >> $GITHUB_ENV
+        while IFS= read -r line; do
+          if echo "$file" | grep -qE "controls/|\.profile"; then
+            echo "CHANGE_FOUND=true" >> $GITHUB_ENV
+            echo "The change_found for finding controls and profiles: ${{ env.CHANGE_FOUND}}"
+          if
+          if echo "$file" | grep -qE "rule.yml|.var"; then
+            # Fetch the diff for the file using its SHA (commit hash)
+            file_sha=$(gh api "$url" | jq -r --arg file "$file" '.[] | select(.filename == $file) | .sha')
+            diff=$(gh api "repos/$repo/commits/$file_sha" | jq -r '.files[0].patch')
+
+            # Optionally, you can echo the diff for debugging
+            echo "Diff for $file:"
+            #echo "$diff"
+          fi
+        done < filenames.txt
+        cat filenames.txt
+
+  # Optionally, print the filenames of the files changed
+  echo "$changed_files"
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
