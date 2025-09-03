@@ -109,7 +109,7 @@ jobs:
               echo "$file" >> update_filename.txt
             fi
           # Check if the file name ends with ".var" and contains "description" or "options" changes
-          else [[ "$file" == *.var ]]; then
+          elif [[ "$file" == *.var ]]; then
             # Fetch the diff for the .var file
             diff=$(gh api "repos/$repo/pulls/${{ env.PR_NUMBER }}/files" --paginate | jq -r --arg file "$file" '.[] | select(.filename == $file) | .patch')
 

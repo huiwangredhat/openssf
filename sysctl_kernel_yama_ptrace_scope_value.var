@@ -3,7 +3,7 @@ documentation_complete: true
 title: kernel.yama.ptrace_scope
 
 description: |-
-    The setting yama.ptrace_scope restricts the ability of a process
+    The test setting yama.ptrace_scope restricts the ability of a process
     to observe and control the execution of another process via ptrace.
     See https://www.kernel.org/doc/Documentation/security/Yama.txt
 
@@ -18,3 +18,4 @@ options: test
     1: 1
     2: 2
     3: 3
+    4: 4
