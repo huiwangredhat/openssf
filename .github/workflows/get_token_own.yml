@@ -107,6 +107,7 @@ jobs:
             # Check if the diff contains the keyword "description"
             if [[ "$diff" == *"description"* || "$diff" == *"rationale"* ]]; then
               echo "$file" >> update_filename.txt
+              echo "CHANGE_FOUND=true" >> $GITHUB_ENV
             fi
           # Check if the file name ends with ".var" and contains "description" or "options" changes
           else [[ "$file" == *.var ]]; then
@@ -116,9 +117,12 @@ jobs:
             # Check if the diff contains the keywords "description" or "options"
             if [[ "$diff" == *"description"* || "$diff" == *"options"* ]]; then
               echo "$file" >> update_filename.txt
+              echo "CHANGE_FOUND=true" >> $GITHUB_ENV
             fi
           fi
         done < filenames.txt
+        echo "${{ env.CHANGE_FOUND }}"
         cat filenames.txt
+        cat update_filename.txt
       env:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}
