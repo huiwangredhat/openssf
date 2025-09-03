@@ -87,7 +87,6 @@ jobs:
     # Step 7: Check the details of the updated rule and var files
     - name: Check the deetails of the rule and var files changed by PR
       if: ${{ env.SKIP == 'false' }}
-      id: changed-files
       run: |
         repo=${{ github.repository }}
         # Fetch all pages of the files for the pull request
