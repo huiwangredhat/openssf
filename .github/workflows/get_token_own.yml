@@ -97,22 +97,28 @@ jobs:
         echo "CHANGE_FOUND=false" >> $GITHUB_ENV
         while IFS= read -r line; do
           if echo "$file" | grep -qE "controls/|\.profile"; then
+            echo "$file" >> update_filename.txt
             echo "CHANGE_FOUND=true" >> $GITHUB_ENV
             echo "The change_found for finding controls and profiles: ${{ env.CHANGE_FOUND}}"
-          if
-          if echo "$file" | grep -qE "rule.yml|.var"; then
-            # Fetch the diff for the file using its SHA (commit hash)
-            file_sha=$(gh api "$url" | jq -r --arg file "$file" '.[] | select(.filename == $file) | .sha')
-            diff=$(gh api "repos/$repo/commits/$file_sha" | jq -r '.files[0].patch')
+          elif [[ "$file" == *"rule.yml" ]]; then
+            # Fetch the diff for the rule.yml file (or you can use a similar method you used to get diffs previously)
+            diff=$(gh api "repos/$repo/pulls/${{ env.PR_NUMBER }}/files" --paginate | jq -r --arg file "$file" '.[] | select(.filename == $file) | .patch')
 
-            # Optionally, you can echo the diff for debugging
-            echo "Diff for $file:"
-            #echo "$diff"
+            # Check if the diff contains the keyword "description"
+            if [[ "$diff" == *"description"* || "$diff" == *"rationale"* ]]; then
+              echo "$file" >> update_filename.txt
+            fi
+          # Check if the file name ends with ".var" and contains "description" or "options" changes
+          else [[ "$file" == *.var ]]; then
+            # Fetch the diff for the .var file
+            diff=$(gh api "repos/$repo/pulls/${{ env.PR_NUMBER }}/files" --paginate | jq -r --arg file "$file" '.[] | select(.filename == $file) | .patch')
+
+            # Check if the diff contains the keywords "description" or "options"
+            if [[ "$diff" == *"description"* || "$diff" == *"options"* ]]; then
+              echo "$file" >> update_filename.txt
+            fi
           fi
         done < filenames.txt
         cat filenames.txt
-
-  # Optionally, print the filenames of the files changed
-  echo "$changed_files"
       env:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}

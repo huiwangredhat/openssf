@@ -13,7 +13,7 @@ operator: equals
 
 interactive: false
 
-options:
+options: test
     default: 1
     1: 1
     2: 2
