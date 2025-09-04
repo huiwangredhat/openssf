@@ -94,7 +94,7 @@ jobs:
         response=$(gh api "$url" --paginate)
         echo "$response" | jq -r '.[].filename' > filenames.txt
         echo "CHANGE_FOUND=false" >> $GITHUB_ENV
-        PR_BRANCH=$(gh pr list --state open --json headRefName --jq '.[] | select(.headRefName | contains("check")) | .headRefName' | head -n 1)
+        #PR_BRANCH=$(gh pr list --state open --json headRefName --jq '.[] | select(.headRefName | contains("check")) | .headRefName' | head -n 1)
         while IFS= read -r line; do
           if echo "$file" | grep -qE "controls/|\.profile"; then
             echo "$file" >> updated_filenames.txt
@@ -102,11 +102,11 @@ jobs:
             echo "The change_found for finding controls and profiles: ${{ env.CHANGE_FOUND}}"
           elif [[ "$file" == *"rule.yml" ]]; then
             # Fetch the diff for the rule.yml file (or you can use a similar method you used to get diffs previously)
-            if check_rule_var_updates.sh "$file" main "$PR_BRANCH" "description"; then
+            if check_rule_var_updates.sh "$file" "${{ github.base_ref }}" "${{ github.head_ref }}" "description"; then
               echo "$file" >> updated_filenames.txt
               echo "CHANGE_FOUND=true" >> $GITHUB_ENV
             fi
-          elif [[ "$file" == *".var" ]] && [[ check_rule_var_updates.sh "$file" main "$PR_BRANCH" "description" ]]; then
+          elif [[ "$file" == *".var" ]] && [[ check_rule_var_updates.sh "$file" "${{ github.base_ref }}" "${{ github.head_ref }}" "description" ]]; then
             echo "$file" >> updated_filenames.txt
             echo "CHANGE_FOUND=true" >> $GITHUB_ENV
             # Check if the file name ends with ".var" and contains "description" or "options" changes
